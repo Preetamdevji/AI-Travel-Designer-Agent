@@ -1,17 +1,29 @@
-from openai import OpenAI
-from utils.get_explore_attraction import explore_prompt
-
+from open_ai_sdk import external_client
+from agents import OpenAIChatCompletionsModel
+from agents.run import RunConfig
+from agents import Agent, Runner
 
 class ExploreAgent:
-    def find_places(destination: str, interest: str = "food,culture,adventure"):
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role":"system", "content": "You generate structured mock explore data in JSON format."},
-                {"role":"user", "content": explore_prompt.format(destination=destination, interest=interest)}
-            ],
-            temperature=0.7
+    
+    async def explore_activities(self):
+    
+        model=OpenAIChatCompletionsModel(
+            model='gpt-3.5-turbo',
+            openai_client=external_client
         )
-        
-        return response.choices[0].message.content
+
+        explore_agent = Agent(
+            name="Explore Activities",
+            instructions="""You are the Explore Agent in an AI Travel Designer system.  
+                            Your role is to explore and suggest travel destinations that match the user’s preferences, interests, and mood.  
+                            Use clear, concise, and engaging descriptions.""",
+            model=model
+        )
+
+        config= RunConfig(
+            model=model,
+            tracing_disabled=True
+        )
+
+        result = Runner.run(explore_agent, f"Explorer activities and suggests according to user's mood or interest", run_config=config)
+        return result.final_output

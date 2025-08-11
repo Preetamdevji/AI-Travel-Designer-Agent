@@ -1,19 +1,30 @@
-from openai import OpenAI
-from utils.get_destination import destination_prompt
-class DestinationAgent:
+from open_ai_sdk import external_client
+from agents import OpenAIChatCompletionsModel
+from agents.run import RunConfig
+from agents import Agent, Runner
+
+class DestinationAgentt:
     
-    def find_places(user_input: str):
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role":"system", "content": "You generate destination suggestions in JSON."},
-                {"role":"user", "content": destination_prompt.format(user_input=user_input)}
-            ],
-            temperature=0.7
+    async def suggest_destinations(self):
+    
+        model=OpenAIChatCompletionsModel(
+            model='gpt-3.5-turbo',
+            openai_client=external_client
         )
-        
-        return response.choices[0].message.content
 
+        destination_agent = Agent(
+            name="Suggest Destination",
+            instructions="""You are a travel destination recommendation agent.
+                Suggest a destination based on the user's mood and interests.
+                Use the `suggest_destinations` tool to generate the result.
+                Return a DestinationSuggestion object.""",
+            model=model
+        )
 
+        config= RunConfig(
+            model=model,
+            tracing_disabled=True
+        )
 
+        result = Runner.run(destination_agent, f"Suggest destination according to user's mood and interest", run_config=config)
+        return result.final_output
